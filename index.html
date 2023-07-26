@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Matriz de Quadrados</title>
+    <style>
+        body {
+            background-color: #343541; /* Fundo escuro */
+            margin: 0;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            color: #fff; /* Texto branco para contrastar com o fundo escuro */
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .square {
+            width: 25px;
+            height: 25px;
+            margin: 2px;
+            display: inline-block;
+            text-align: center;
+            font-size: 8px;
+            line-height: 25px;
+            cursor: pointer;
+            color: #fff; /* Números sempre em branco */
+            border: 1px solid #fff; /* Contorno branco para contrastar com os quadrados */
+            background-color: #292a2d; /* Cor inicial dos quadrados */
+            user-select: none; /* Impede a seleção de texto dentro dos quadrados */
+        }
+    </style>
+</head>
+<body>
+    <h1>Matriz de Quadrados</h1>
+    <div id="container"></div>
+
+    <script>
+        const container = document.getElementById('container');
+        const totalSquares = 2000;
+        const colors = ['#2ecc40', '#ff775f', '#09bcae']; // Novas cores de alternância
+
+        // Recupera os dados salvos no Local Storage, se houver.
+        let savedData = JSON.parse(localStorage.getItem('squareColors')) || {};
+        let currentIndex = savedData.currentIndex || colors.indexOf('#292a2d');
+        let squaresData = savedData.squaresData || {};
+
+        for (let i = 1; i <= totalSquares; i++) {
+            const square = document.createElement('div');
+            square.classList.add('square');
+            square.innerText = i;
+
+            square.addEventListener('mouseup', (event) => {
+                if (event.button === 0) {
+                    toggleColor(square); // Clique esquerdo - alterna a cor
+                } else if (event.button === 2) {
+                    event.preventDefault(); // Evita o menu de contexto padrão
+                    restoreInitialColor(square); // Clique direito - restaura a cor inicial
+                }
+            });
+
+            // Impede o menu de contexto padrão apenas no quadrado
+            square.addEventListener('contextmenu', (event) => {
+                event.preventDefault();
+            });
+
+            container.appendChild(square);
+
+            // Restaura a cor do quadrado baseado no que está salvo no Local Storage.
+            if (squaresData[i]) {
+                square.style.backgroundColor = squaresData[i];
+                square.style.color = squaresData[i] === '#292a2d' ? '#fff' : '#000';
+            }
+        }
+
+        function toggleColor(square) {
+            currentIndex = (currentIndex + 1) % colors.length;
+            square.style.backgroundColor = colors[currentIndex];
+            square.style.color = colors[currentIndex] === '#292a2d' ? '#fff' : '#000';
+
+            // Salva a cor do quadrado no Local Storage.
+            squaresData[square.innerText] = colors[currentIndex];
+            localStorage.setItem('squareColors', JSON.stringify({ currentIndex, squaresData }));
+        }
+
+        function restoreInitialColor(square) {
+            square.style.backgroundColor = '#292a2d';
+            square.style.color = '#fff';
+
+            // Salva a cor inicial do quadrado no Local Storage.
+            squaresData[square.innerText] = '#292a2d';
+            localStorage.setItem('squareColors', JSON.stringify({ currentIndex, squaresData }));
+        }
+    </script>
+</body>
+</html>

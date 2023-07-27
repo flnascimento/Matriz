@@ -4,11 +4,11 @@
     <title>Matriz de Quadrados</title>
     <style>
         body {
-            background-color: #343541; /* Fundo escuro */
+            background-color: #343541;
             margin: 0;
             padding: 10px;
             font-family: Arial, sans-serif;
-            color: #fff; /* Texto branco para contrastar com o fundo escuro */
+            color: #fff;
         }
 
         h1 {
@@ -25,10 +25,10 @@
             font-size: 8px;
             line-height: 25px;
             cursor: pointer;
-            color: #fff; /* Números sempre em branco */
-            border: 1px solid #fff; /* Contorno branco para contrastar com os quadrados */
-            background-color: #292a2d; /* Cor inicial dos quadrados */
-            user-select: none; /* Impede a seleção de texto dentro dos quadrados */
+            color: #fff;
+            border: 1px solid #fff;
+            background-color: #292a2d;
+            user-select: none;
         }
     </style>
 </head>
@@ -37,11 +37,14 @@
     <div id="container"></div>
 
     <script>
+        // Adiciona a funcionalidade BroadcastChannel
+        const channel = new BroadcastChannel('squareColorsChannel');
+
         const container = document.getElementById('container');
         const totalSquares = 2000;
-        const colors = ['#2ecc40', '#ff775f', '#09bcae']; // Novas cores de alternância
+        const colors = ['#2ecc40', '#ff775f', '#09bcae'];
 
-        // Recupera os dados salvos no Local Storage, se houver.
+        // Recupera os dados salvos no localStorage, se houver.
         let savedData = JSON.parse(localStorage.getItem('squareColors')) || {};
         let currentIndex = savedData.currentIndex || colors.indexOf('#292a2d');
         let squaresData = savedData.squaresData || {};
@@ -53,21 +56,20 @@
 
             square.addEventListener('mouseup', (event) => {
                 if (event.button === 0) {
-                    toggleColor(square); // Clique esquerdo - alterna a cor
+                    toggleColor(square);
                 } else if (event.button === 2) {
-                    event.preventDefault(); // Evita o menu de contexto padrão
-                    restoreInitialColor(square); // Clique direito - restaura a cor inicial
+                    event.preventDefault();
+                    restoreInitialColor(square);
                 }
             });
 
-            // Impede o menu de contexto padrão apenas no quadrado
             square.addEventListener('contextmenu', (event) => {
                 event.preventDefault();
             });
 
             container.appendChild(square);
 
-            // Restaura a cor do quadrado baseado no que está salvo no Local Storage.
+            // Restaura a cor do quadrado baseado no que está salvo no localStorage.
             if (squaresData[i]) {
                 square.style.backgroundColor = squaresData[i];
                 square.style.color = squaresData[i] === '#292a2d' ? '#fff' : '#000';
@@ -79,19 +81,35 @@
             square.style.backgroundColor = colors[currentIndex];
             square.style.color = colors[currentIndex] === '#292a2d' ? '#fff' : '#000';
 
-            // Salva a cor do quadrado no Local Storage.
+            // Salva a cor do quadrado no localStorage.
             squaresData[square.innerText] = colors[currentIndex];
             localStorage.setItem('squareColors', JSON.stringify({ currentIndex, squaresData }));
+
+            // Envia a cor do quadrado atualizado para outras instâncias abertas do site.
+            channel.postMessage({ squareNumber: square.innerText, color: colors[currentIndex] });
         }
 
         function restoreInitialColor(square) {
             square.style.backgroundColor = '#292a2d';
             square.style.color = '#fff';
 
-            // Salva a cor inicial do quadrado no Local Storage.
+            // Salva a cor inicial do quadrado no localStorage.
             squaresData[square.innerText] = '#292a2d';
             localStorage.setItem('squareColors', JSON.stringify({ currentIndex, squaresData }));
+
+            // Envia a cor inicial do quadrado para outras instâncias abertas do site.
+            channel.postMessage({ squareNumber: square.innerText, color: '#292a2d' });
         }
+
+        // Recebe mensagens de outras instâncias e atualiza as cores dos quadrados.
+        channel.onmessage = (event) => {
+            const { squareNumber, color } = event.data;
+            const square = container.querySelector(`.square:nth-child(${squareNumber})`);
+            if (square) {
+                square.style.backgroundColor = color;
+                square.style.color = color === '#292a2d' ? '#fff' : '#000';
+            }
+        };
     </script>
 </body>
 </html>
